@@ -1,0 +1,20 @@
+worker_processes auto;
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream backend {
+        {% for server in upstream_servers %}
+        {{ server }}
+        {% endfor %}
+    }
+
+    server {
+        listen 8080;
+
+        location / {
+            proxy_pass http://backend;
+        }
+    }
+}

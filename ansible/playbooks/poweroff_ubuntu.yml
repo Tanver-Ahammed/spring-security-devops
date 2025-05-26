@@ -1,0 +1,9 @@
+---
+- name: Power off Ubuntu machines
+  hosts:
+    - web_vms
+    - proxy
+  become: yes  # Ensure we run with sudo privileges
+  tasks:
+    - name: Power off the machine
+      command: poweroff

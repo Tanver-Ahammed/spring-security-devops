@@ -1,0 +1,40 @@
+- name: Install Docker
+  hosts: app_servers
+  become: true
+
+  vars:
+    nginx_image: nginx:latest
+    nginx_container_name: nginx_proxy
+    nginx_conf_src: nginx.conf.j2
+    nginx_conf_dest: /tmp/nginx.conf
+    upstream_servers:
+      - server 192.168.123.121:8080;
+      - server 192.168.123.122:8080;
+      - server 192.168.123.123:8080;
+
+  collections:
+    - community.docker
+  
+  tasks:
+    - name: Ensure Docker is installed
+      ansible.builtin.package:
+        name: docker-ce
+        state: present
+
+    - name: Pull NGINX image
+      community.docker.docker_image:
+        name: "{{ nginx_image }}"
+        source: pull
+
+    - name: Create NGINX config from template
+      ansible.builtin.template:
+        src: "{{ nginx_conf_src }}"
+        dest: "{{ nginx_conf_dest }}"
+
+    - name: Run NGINX container
+      community.docker.docker_container:
+        name: "{{ nginx_container_name }}"
+        image: "{{ nginx_image }}"
+        state: started
+        volumes:
+          - "{{ nginx_conf_dest }}:/etc/nginx/nginx.conf:ro"
