@@ -1,0 +1,55 @@
+- name: Install Node Exporter and configure as service
+  hosts: all
+  become: yes
+
+  vars:
+    node_exporter_version: "1.9.1"
+    node_exporter_user: "node_exporter"
+    node_exporter_group: "node_exporter"
+    node_exporter_install_dir: "/opt"
+    node_exporter_systemd_dir: "/etc/systemd/system"
+
+  tasks:
+
+    - name: Download Node Exporter archive
+      ansible.builtin.get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+
+    - name: Extract Node Exporter binary
+      ansible.builtin.unarchive:
+        src: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+        dest: "/tmp/"
+        remote_src: yes
+
+    - name: Copy node_exporter binary to install dir
+      ansible.builtin.command: mv /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter {{ node_exporter_install_dir }}/node_exporter
+
+    - name: Cleanup extracted files
+      ansible.builtin.file:
+        path: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
+        state: absent
+
+    - name: Cleanup archive
+      ansible.builtin.file:
+        path: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+        state: absent
+
+
+    - name: Deploy Node Exporter systemd service file
+      ansible.builtin.template:
+        src: "node_exporter.service.j2"
+        dest: "{{ node_exporter_systemd_dir }}/node_exporter.service"
+      notify:
+        - Reload systemd
+
+    - name: Enable and start node_exporter
+      ansible.builtin.systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.command: systemctl daemon-reload
+      become: yes
