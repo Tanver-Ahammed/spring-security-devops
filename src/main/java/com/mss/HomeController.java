@@ -21,7 +21,7 @@ public class HomeController {
         log.info("Hello World");
         String vmHostname = getVmHostName();
         String commitHash = getCommitHash();
-        return "<h1>VM Hostname is: <span style='color:red;'>" + vmHostname + "</span></h1>"
+        return "<h1>VM Hostname is: <span style='color:blue;'>" + vmHostname + "</span></h1>"
                 + "<h2>Commit Hash is: " + commitHash + "</h2>";
     }
 
